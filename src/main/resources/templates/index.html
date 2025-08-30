@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Skillcraft Technology</title>
+    <title th:text="${title}">Skillcraft Technology</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <h1>Welcome to Skillcraft Technology</h1>
-    <p>Explore our DevOps Topics!</p>
+    <h1 th:text="${title}"></h1>
+    <p th:text="${message}"></p>
+    <a href="/devops">Check DevOps Topics</a>
 </body>
 </html>
