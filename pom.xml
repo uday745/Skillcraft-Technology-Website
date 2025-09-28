@@ -7,11 +7,7 @@
 
     <groupId>com.skillcraft</groupId>
     <artifactId>skillcraft-website</artifactId>
-<<<<<<< HEAD
-    <version>1.0.4</version>
-=======
-    <version>1.0.1-SNAPSHOT</version>
->>>>>>> c28a3401d79194f4d8bf48268d291aac393a673c
+    <version>1.0.1</version>
     <packaging>jar</packaging>
     <name>Skillcraft Website</name>
 
@@ -22,19 +18,14 @@
     </parent>
 
     <dependencies>
-        <!-- Spring Boot Web Starter -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-
-        <!-- Thymeleaf for templates -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
-
-        <!-- Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -44,13 +35,10 @@
 
     <build>
         <plugins>
-            <!-- Spring Boot Maven Plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
-
-            <!-- SonarQube Maven Plugin -->
             <plugin>
                 <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
@@ -59,7 +47,6 @@
         </plugins>
     </build>
 
-    <!-- Nexus Deployment Configuration -->
     <distributionManagement>
         <repository>
             <id>nexus-releases</id>
@@ -68,10 +55,17 @@
         </repository>
     </distributionManagement>
 
+    <repositories>
+        <repository>
+            <id>nexus-public</id>
+            <url>http://15.206.189.229:8081/repository/maven-public/</url>
+        </repository>
+    </repositories>
+
     <pluginRepositories>
         <pluginRepository>
             <id>nexus-public</id>
-            <url>http://15.206.189.229:8081/repository/skillcraft-host/</url>
+            <url>http://your-nexus-server:8081/repository/maven-public/</url>
         </pluginRepository>
     </pluginRepositories>
 
