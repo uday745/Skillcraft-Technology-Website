@@ -1,12 +1,17 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
-         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
+
     <groupId>com.skillcraft</groupId>
     <artifactId>skillcraft-website</artifactId>
+<<<<<<< HEAD
     <version>1.0.4</version>
+=======
+    <version>1.0.1-SNAPSHOT</version>
+>>>>>>> c28a3401d79194f4d8bf48268d291aac393a673c
     <packaging>jar</packaging>
     <name>Skillcraft Website</name>
 
@@ -39,6 +44,7 @@
 
     <build>
         <plugins>
+            <!-- Spring Boot Maven Plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -52,4 +58,21 @@
             </plugin>
         </plugins>
     </build>
+
+    <!-- Nexus Deployment Configuration -->
+    <distributionManagement>
+        <repository>
+            <id>nexus-releases</id>
+            <name>Nexus Releases</name>
+            <url>http://15.206.189.229:8081/repository/skillcraft-host/</url>
+        </repository>
+    </distributionManagement>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>nexus-public</id>
+            <url>http://15.206.189.229:8081/repository/skillcraft-host/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
 </project>
