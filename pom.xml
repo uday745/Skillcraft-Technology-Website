@@ -51,7 +51,7 @@
         <repository>
             <id>nexus-releases</id>
             <name>Nexus Releases</name>
-            <url>http://15.206.189.229:8081/repository/skillcraft-host/</url>
+            <url>http://3.110.204.33:8081/repository/skillcraft-host/</url>
         </repository>
     </distributionManagement>
 
