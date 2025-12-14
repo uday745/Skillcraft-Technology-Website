@@ -1,11 +1,6 @@
 pipeline {
     agent { label 'master' }
 
-    options {
-        timestamps()
-        disableConcurrentBuilds()
-    }
-
     parameters {
         string(
             name: 'GIT_REPO_URL',
@@ -16,7 +11,7 @@ pipeline {
         string(
             name: 'GIT_BRANCH',
             defaultValue: 'main',
-            description: 'Git branch'
+            description: 'Git branch to clone'
         )
 
         credentials(
@@ -24,38 +19,48 @@ pipeline {
             defaultValue: 'GITHUB',
             description: 'Git credentials ID'
         )
-
-        choice(
-            name: 'ENVIRONMENT',
-            choices: ['dev', 'qa', 'prod'],
-            description: 'Deployment environment'
-        )
-    }
-
-    environment {
-        APP_NAME = "skillcraft-web"
-        DEPLOY_DIR = "/opt/${APP_NAME}"
     }
 
     stages {
 
-        /* ------------------- 1. Checkout ------------------- */
-        stage('Checkout Code') {
+        /* ----------- Checkout ----------- */
+        stage('Cloning the Repo') {
             steps {
-                echo "Cloning ${params.GIT_BRANCH} branch"
-                git branch: "${params.GIT_BRANCH}",
-                    credentialsId: "${params.GIT_CREDENTIALS}",
-                    url: "${params.GIT_REPO_URL}"
+                git branch: params.GIT_BRANCH,
+                    credentialsId: params.GIT_CREDENTIALS,
+                    url: params.GIT_REPO_URL
+            }
+        }
+
+        /* ----------- SonarQube Analysis ----------- */
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonar') {
+                    sh '''
+                      mvn clean verify sonar:sonar \
+                      -Dsonar.projectKey=skillcraft-java \
+                      -Dsonar.projectName=Skillcraft-Java
+                    '''
+                }
+            }
+        }
+
+        /* ----------- Quality Gate (MANDATORY) ----------- */
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
     }
 
     post {
         success {
-            echo "✅ Pipeline completed successfully"
+            echo "✅ SonarQube Quality Gate PASSED"
         }
         failure {
-            echo "❌ Pipeline failed"
+            echo "❌ Pipeline FAILED (Quality Gate or Build issue)"
         }
         always {
             cleanWs()
