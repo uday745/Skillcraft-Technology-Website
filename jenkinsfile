@@ -2,7 +2,7 @@ pipeline {
     agent { label 'master' }
 
     tools {
-        maven 'maven-3'   // ✅ REQUIRED
+        maven 'maven-1'
     }
 
     parameters {
@@ -68,3 +68,4 @@ pipeline {
         }
     }
 }
+
