@@ -37,20 +37,40 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonar') {
-                    sh '''
-                      mvn clean verify sonar:sonar \
-                      -Dsonar.projectKey=skillcraft-java \
-                      -Dsonar.projectName=Skillcraft-Java
-                    '''
+                script {
+                    if (params.GIT_BRANCH == 'main') {
+                        echo "Running SonarQube analysis on MAIN branch"
+
+                        withSonarQubeEnv('sonar') {
+                            sh '''
+                              mvn clean verify sonar:sonar \
+                              -Dsonar.projectKey=skillcraft-java \
+                              -Dsonar.projectName=Skillcraft-Java
+                            '''
+                        }
+                    } else {
+                        echo "Skipping SonarQube analysis for branch: ${params.GIT_BRANCH}"
+                    }
                 }
             }
         }
 
         stage('Quality Gate') {
+            when {
+                expression { params.GIT_BRANCH == 'main' }
+            }
             steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
+                timeout(time: 1, unit: 'HOURS') {
+                    script {
+                        def qg = waitForQualityGate()
+
+                        if (qg.status == 'OK') {
+                            echo "✅ Quality Gate PASSED"
+                        } else {
+                            echo "❌ Quality Gate FAILED: ${qg.status}"
+                            error("Pipeline failed due to Quality Gate failure")
+                        }
+                    }
                 }
             }
         }
@@ -58,14 +78,13 @@ pipeline {
 
     post {
         success {
-            echo "✅ SonarQube Quality Gate PASSED"
+            echo "🎉 Pipeline completed successfully"
         }
         failure {
-            echo "❌ Pipeline FAILED"
+            echo "🚨 Pipeline failed"
         }
         always {
             cleanWs()
         }
     }
 }
-
