@@ -1,0 +1,64 @@
+pipeline {
+    agent { label 'master' }
+
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+    }
+
+    parameters {
+        string(
+            name: 'GIT_REPO_URL',
+            defaultValue: 'https://github.com/uday745/Skillcraft-Technology-Website.git',
+            description: 'Git repository URL'
+        )
+
+        string(
+            name: 'GIT_BRANCH',
+            defaultValue: 'main',
+            description: 'Git branch'
+        )
+
+        credentials(
+            name: 'GIT_CREDENTIALS',
+            defaultValue: 'GITHUB',
+            description: 'Git credentials ID'
+        )
+
+        choice(
+            name: 'ENVIRONMENT',
+            choices: ['dev', 'qa', 'prod'],
+            description: 'Deployment environment'
+        )
+    }
+
+    environment {
+        APP_NAME = "skillcraft-web"
+        DEPLOY_DIR = "/opt/${APP_NAME}"
+    }
+
+    stages {
+
+        /* ------------------- 1. Checkout ------------------- */
+        stage('Checkout Code') {
+            steps {
+                echo "Cloning ${params.GIT_BRANCH} branch"
+                git branch: "${params.GIT_BRANCH}",
+                    credentialsId: "${params.GIT_CREDENTIALS}",
+                    url: "${params.GIT_REPO_URL}"
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Pipeline completed successfully"
+        }
+        failure {
+            echo "❌ Pipeline failed"
+        }
+        always {
+            cleanWs()
+        }
+    }
+}
