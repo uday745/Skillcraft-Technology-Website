@@ -37,28 +37,17 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                script {
-                    if (params.GIT_BRANCH == 'main') {
-                        echo "Running SonarQube analysis on MAIN branch"
-
-                        withSonarQubeEnv('sonar') {
-                            sh '''
-                              mvn clean verify sonar:sonar \
-                              -Dsonar.projectKey=skillcraft-java \
-                              -Dsonar.projectName=Skillcraft-Java
-                            '''
-                        }
-                    } else {
-                        echo "Skipping SonarQube analysis for branch: ${params.GIT_BRANCH}"
-                    }
+                withSonarQubeEnv('sonar') {
+                    sh '''
+                      mvn clean verify sonar:sonar \
+                      -Dsonar.projectKey=skillcraft-java \
+                      -Dsonar.projectName=Skillcraft-Java
+                    '''
                 }
             }
         }
 
         stage('Quality Gate') {
-            when {
-                expression { params.GIT_BRANCH == 'main' }
-            }
             steps {
                 timeout(time: 1, unit: 'HOURS') {
                     script {
