@@ -32,8 +32,12 @@ jobs:
       - name: Run Trivy Filesystem Scan (JSON)
         run: trivy fs --format table -o fs-report.json .
 
-      - name: Upload Trivy JSON Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: trivy-fs-json-report
-          path: fs-report.json
+      - name: Save Trivy report locally on runner
+        run: |
+          REPORT_DIR="/var/log/trivy"
+          sudo mkdir -p $REPORT_DIR
+          sudo cp fs-report.json $REPORT_DIR/
+          sudo chmod 644 $REPORT_DIR/fs-report.json
+
+          echo "✅ Trivy report saved at:"
+          echo "$REPORT_DIR/fs-report.json"
