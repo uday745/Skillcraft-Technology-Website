@@ -1,0 +1,37 @@
+name: Trivy FS Scan
+
+on:
+  workflow_dispatch:   # manual trigger
+
+jobs:
+  trivy-scan:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Install Trivy
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" \
+          | sudo tee -a /etc/apt/sources.list.d/trivy.list
+
+          sudo apt-get update -y
+          sudo apt-get install -y trivy
+
+      - name: Verify Trivy Installation
+        run: trivy --version
+
+      - name: Run Trivy Filesystem Scan (JSON)
+        run: trivy fs --format table -o fs-report.json .
+
+      - name: Upload Trivy JSON Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-fs-json-report
+          path: fs-report.json
