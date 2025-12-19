@@ -24,8 +24,8 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v5.0.0
         with:
           args: >
-            -Dsonar.projectKey=my-project-key
-            -Dsonar.projectName=my-project-name
+            -Dsonar.projectKey=Skillcraft-Technology
+            -Dsonar.projectName=Skillcraft-Technology
             -Dsonar.java.binaries=target/classes
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
