@@ -1,0 +1,34 @@
+name: CI Publish
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+
+  build-and-publish:
+    runs-on: Self-hosted
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: temurin
+
+    - name: Build
+      run: mvn clean package
+
+    - name: Publish to Nexus
+      uses: sonatype-nexus-community/nexus-repo-github-action@master
+      with:
+        serverUrl: ${{ secrets.NEXUS_URL }}
+        username: ${{ secrets.NEXUS_USERNAME }}
+        password: ${{ secrets.NEXUS_PASSWORD }}
+        format: maven2
+        repository: maven-releases
+        coordinates: groupId=com.example artifactId=app version=${{ github.sha }}
+        assets: extension=jar
+        filename: ./target/app.jar
