@@ -1,8 +1,7 @@
 name: CI Publish
 
 on:
-  push:
-    branches: [ main ]
+  workflow_dispatch:   # 👈 MANUAL trigger
 
 jobs:
 
@@ -29,6 +28,6 @@ jobs:
         password: ${{ secrets.NEXUS_PASSWORD }}
         format: maven2
         repository: maven-releases
-        coordinates: groupId=com.example artifactId=app version=${{ github.sha }}
+        coordinates: groupId=com.skillcraft artifactId=skillcraft-website version=${{ github.sha }}
         assets: extension=jar
-        filename: ./target/app.jar
+        filename: ./target/skillcraft-website-*.jar
