@@ -1,24 +1,31 @@
 name: CI Publish
 
 on:
-  workflow_dispatch:   # 👈 MANUAL trigger
+  workflow_dispatch:   # Manual trigger
 
 jobs:
-
   build-and-publish:
-    runs-on: Self-hosted
+    runs-on: self-hosted
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-    - name: Setup JDK
+    - name: Setup JDK 17
       uses: actions/setup-java@v3
       with:
         java-version: '17'
         distribution: temurin
 
-    - name: Build
+    - name: Build with Maven
       run: mvn clean package
+
+    - name: Read version from pom.xml
+      run: |
+        echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+
+    - name: Verify JAR
+      run: ls -l target
 
     - name: Publish to Nexus
       uses: sonatype-nexus-community/nexus-repo-github-action@master
@@ -28,6 +35,6 @@ jobs:
         password: ${{ secrets.NEXUS_PASSWORD }}
         format: maven2
         repository: maven-releases
-        coordinates: groupId=com.skillcraft artifactId=skillcraft-website version=${{ github.sha }}
+        coordinates: groupId=com.skillcraft artifactId=skillcraft-website version=${{ env.VERSION }}
         assets: extension=jar
-        filename: ./target/skillcraft-website-*.jar
+        filename: ./target/skillcraft-website-${{ env.VERSION }}.jar
