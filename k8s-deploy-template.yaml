@@ -30,5 +30,3 @@ spec:
     - protocol: TCP
       port: 80         # Port exposed inside cluster
       targetPort: 9090 # Port container listens on
-      nodePort: 30355
-  type: NodePort  # Or ClusterIP / NodePort depending on your setup
