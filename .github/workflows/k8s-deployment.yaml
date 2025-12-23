@@ -32,6 +32,24 @@ jobs:
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login \
             -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
+      # 🔹 Delete old Docker images (keep current version)
+      - name: Cleanup old skillcraft-website images
+        run: |
+          IMAGE_NAME="${{ secrets.DOCKER_USERNAME }}/skillcraft-website"
+          CURRENT_TAG="${IMAGE_NAME}:${{ env.VERSION }}"
+
+          echo "Keeping current image: $CURRENT_TAG"
+
+          OLD_IMAGES=$(docker images "$IMAGE_NAME" --format "{{.Repository}}:{{.Tag}}" | grep -v "$CURRENT_TAG" || true)
+
+          if [ -n "$OLD_IMAGES" ]; then
+            echo "Deleting old images:"
+            echo "$OLD_IMAGES"
+            echo "$OLD_IMAGES" | xargs docker rmi -f
+          else
+            echo "No old images to delete"
+          fi
+
       # 🔹 Build Docker image
       - name: Build Docker Image
         run: |
