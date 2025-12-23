@@ -4,21 +4,24 @@ on:
   workflow_dispatch:
     inputs:
       deploy_env:
-        description: "Deploy target"
+        description: "Deploy target environment"
         required: true
         type: choice
         options:
           - dev
           - prod
           - both
+
 jobs:
   build-and-deploy:
     runs-on: self-hosted
 
     steps:
+      # 🔹 Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 🔹 Setup JDK 17
       - name: Setup JDK 17
         uses: actions/setup-java@v3
         with:
@@ -29,6 +32,7 @@ jobs:
       - name: Read version
         run: |
           echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+          echo "Project version is $VERSION"
 
       # 🔹 Build Maven package
       - name: Build with Maven
@@ -40,7 +44,7 @@ jobs:
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login \
             -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      # 🔹 Delete old Docker images (keep current version)
+      # 🔹 Cleanup old Docker images (keep current version)
       - name: Cleanup old skillcraft-website images
         run: |
           IMAGE_NAME="${{ secrets.DOCKER_USERNAME }}/skillcraft-website"
@@ -68,40 +72,36 @@ jobs:
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/skillcraft-website:${{ env.VERSION }}
 
-      # 🔹 Generate dynamic K8s YAML
-      - name: Generate K8s YAML
+      # 🔹 Generate dynamic Kubernetes YAML
+      - name: Generate Kubernetes YAML (Dynamic Image)
         run: |
           export VERSION=${{ env.VERSION }}
           export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+
           envsubst < k8s-deploy-template.yaml > k8s-deploy.yaml
 
-      # 🔹 Deploy to Kubernetes
-            # 🔹 Deploy to Kubernetes
-      - name: Deploy to Kubernetes (single step)
+          echo "Generated Kubernetes manifest:"
+          cat k8s-deploy.yaml
+
+      # 🔹 Deploy to Kubernetes based on input environment
+      - name: Deploy to Kubernetes
         run: |
-          echo "Selected environment: ${{ github.event.inputs.deploy_env }}"
+          ENV="${{ github.event.inputs.deploy_env }}"
 
-          if [[ "${{ github.event.inputs.deploy_env }}" == "dev" ]]; then
-            echo "Deploying to DEV"
-            kubectl apply -f k8s/dev/deploy.yaml -n dev
+          if [[ "$ENV" == "dev" ]]; then
+            echo "Deploying to DEV environment"
+            kubectl apply -f k8s-deploy.yaml -n dev
             kubectl rollout status deployment/skillcraft-website -n dev
 
-          elif [[ "${{ github.event.inputs.deploy_env }}" == "prod" ]]; then
-            echo "Deploying to PROD."
-            kubectl apply -f k8s/prod/deploy.yaml -n prod
+          elif [[ "$ENV" == "prod" ]]; then
+            echo "Deploying to PROD environment"
+            kubectl apply -f k8s-deploy.yaml -n prod
             kubectl rollout status deployment/skillcraft-website -n prod
 
-          elif [[ "${{ github.event.inputs.deploy_env }}" == "both" ]]; then
-            echo "Deploying to DEV first"
-            kubectl apply -f k8s/dev/deploy.yaml -n dev
+          elif [[ "$ENV" == "both" ]]; then
+            echo "Deploying to both DEV and PROD environments"
+            kubectl apply -f k8s-deploy.yaml -n dev
             kubectl rollout status deployment/skillcraft-website -n dev
 
-            echo "Deploying to PROD."
-            kubectl apply -f k8s/prod/deploy.yaml -n prod
+            kubectl apply -f k8s-deploy.yaml -n prod
             kubectl rollout status deployment/skillcraft-website -n prod
-          else
-            echo "Invalid option."
-            exit 1
-          fi
-
-
