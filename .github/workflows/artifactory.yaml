@@ -21,4 +21,4 @@ jobs:
         env:
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-        run: mvn clean deploy -s settings.xml
+        run: mvn clean deploy 
