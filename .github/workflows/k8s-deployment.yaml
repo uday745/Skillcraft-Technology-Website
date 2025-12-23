@@ -47,7 +47,7 @@ jobs:
         run: |
           export VERSION=${{ env.VERSION }}
           export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
-          envsubst < k8s/k8s-deploy-template.yaml > k8s-deploy.yaml
+          envsubst < k8s-deploy-template.yaml > k8s-deploy.yaml
 
       # 🔹 Deploy to Kubernetes
       - name: Deploy to Kubernetes
