@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-docker:
+  build-and-deploy:
     runs-on: self-hosted
 
     steps:
@@ -22,27 +22,9 @@ jobs:
         run: |
           echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
 
-      # 🔹 Maven build
+      # 🔹 Build Maven package
       - name: Build with Maven
-        run: mvn clean package 
-
-      # 🔹 Delete OLD versions of this image (keep current)
-      - name: Cleanup old skillcraft-website images
-        run: |
-          IMAGE_NAME="${{ secrets.DOCKER_USERNAME }}/skillcraft-website"
-          CURRENT_TAG="${IMAGE_NAME}:${{ env.VERSION }}"
-
-          echo "Current image to keep: $CURRENT_TAG"
-
-          OLD_IMAGES=$(docker images "$IMAGE_NAME" --format "{{.Repository}}:{{.Tag}}" | grep -v "$CURRENT_TAG" || true)
-
-          if [ -n "$OLD_IMAGES" ]; then
-            echo "Deleting old images:"
-            echo "$OLD_IMAGES"
-            echo "$OLD_IMAGES" | xargs docker rmi -f
-          else
-            echo "No old images found to delete"
-          fi
+        run: mvn clean package
 
       # 🔹 Docker login
       - name: Docker Login
@@ -53,11 +35,22 @@ jobs:
       # 🔹 Build Docker image
       - name: Build Docker Image
         run: |
-          docker build -t \
-          ${{ secrets.DOCKER_USERNAME }}/skillcraft-website:${{ env.VERSION }} .
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/skillcraft-website:${{ env.VERSION }} .
 
       # 🔹 Push Docker image
       - name: Push Docker Image
         run: |
-          docker push \
-          ${{ secrets.DOCKER_USERNAME }}/skillcraft-website:${{ env.VERSION }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/skillcraft-website:${{ env.VERSION }}
+
+      # 🔹 Generate dynamic K8s YAML
+      - name: Generate K8s YAML
+        run: |
+          export VERSION=${{ env.VERSION }}
+          export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+          envsubst < k8s/k8s-deploy-template.yaml > k8s-deploy.yaml
+
+      # 🔹 Deploy to Kubernetes
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f k8s/k8s-deploy.yaml
+          kubectl rollout status deployment/skillcraft-website -n default
