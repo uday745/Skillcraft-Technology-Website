@@ -105,3 +105,4 @@ jobs:
 
             kubectl apply -f k8s-deploy.yaml -n prod
             kubectl rollout status deployment/skillcraft-website -n prod
+          fi
