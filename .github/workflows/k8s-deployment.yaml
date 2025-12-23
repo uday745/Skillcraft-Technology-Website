@@ -2,7 +2,15 @@ name: CI Maven Build & Docker Publish
 
 on:
   workflow_dispatch:
-
+    inputs:
+      deploy_env:
+        description: "Deploy target"
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+          - both
 jobs:
   build-and-deploy:
     runs-on: self-hosted
@@ -68,7 +76,32 @@ jobs:
           envsubst < k8s-deploy-template.yaml > k8s-deploy.yaml
 
       # 🔹 Deploy to Kubernetes
-      - name: Deploy to Kubernetes
+            # 🔹 Deploy to Kubernetes
+      - name: Deploy to Kubernetes (single step)
         run: |
-          kubectl apply -f k8s-deploy.yaml
-          kubectl rollout status deployment/skillcraft-website -n default
+          echo "Selected environment: ${{ github.event.inputs.deploy_env }}"
+
+          if [[ "${{ github.event.inputs.deploy_env }}" == "dev" ]]; then
+            echo "Deploying to DEV"
+            kubectl apply -f k8s/dev/deploy.yaml -n dev
+            kubectl rollout status deployment/skillcraft-website -n dev
+
+          elif [[ "${{ github.event.inputs.deploy_env }}" == "prod" ]]; then
+            echo "Deploying to PROD."
+            kubectl apply -f k8s/prod/deploy.yaml -n prod
+            kubectl rollout status deployment/skillcraft-website -n prod
+
+          elif [[ "${{ github.event.inputs.deploy_env }}" == "both" ]]; then
+            echo "Deploying to DEV first"
+            kubectl apply -f k8s/dev/deploy.yaml -n dev
+            kubectl rollout status deployment/skillcraft-website -n dev
+
+            echo "Deploying to PROD."
+            kubectl apply -f k8s/prod/deploy.yaml -n prod
+            kubectl rollout status deployment/skillcraft-website -n prod
+          else
+            echo "Invalid option."
+            exit 1
+          fi
+
+
