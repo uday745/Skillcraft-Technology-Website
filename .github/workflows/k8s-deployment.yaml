@@ -1,0 +1,63 @@
+name: CI Maven Build & Docker Publish
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-docker:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: temurin
+
+      # 🔹 Read version from pom.xml
+      - name: Read version
+        run: |
+          echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+
+      # 🔹 Maven build
+      - name: Build with Maven
+        run: mvn clean package 
+
+      # 🔹 Delete OLD versions of this image (keep current)
+      - name: Cleanup old skillcraft-website images
+        run: |
+          IMAGE_NAME="${{ secrets.DOCKER_USERNAME }}/skillcraft-website"
+          CURRENT_TAG="${IMAGE_NAME}:${{ env.VERSION }}"
+
+          echo "Current image to keep: $CURRENT_TAG"
+
+          OLD_IMAGES=$(docker images "$IMAGE_NAME" --format "{{.Repository}}:{{.Tag}}" | grep -v "$CURRENT_TAG" || true)
+
+          if [ -n "$OLD_IMAGES" ]; then
+            echo "Deleting old images:"
+            echo "$OLD_IMAGES"
+            echo "$OLD_IMAGES" | xargs docker rmi -f
+          else
+            echo "No old images found to delete"
+          fi
+
+      # 🔹 Docker login
+      - name: Docker Login
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login \
+            -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      # 🔹 Build Docker image
+      - name: Build Docker Image
+        run: |
+          docker build -t \
+          ${{ secrets.DOCKER_USERNAME }}/skillcraft-website:${{ env.VERSION }} .
+
+      # 🔹 Push Docker image
+      - name: Push Docker Image
+        run: |
+          docker push \
+          ${{ secrets.DOCKER_USERNAME }}/skillcraft-website:${{ env.VERSION }}
