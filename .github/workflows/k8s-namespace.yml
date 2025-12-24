@@ -1,0 +1,29 @@
+name: Create k8s Namespace (Minikube)
+
+on:
+  workflow_dispatch:
+    inputs:
+      kubernetes_namespace:
+        description: "Namespace name"
+        required: true
+        type: string
+        default: dev
+
+jobs:
+  namespace:
+    runs-on: self-hosted
+
+    steps:
+      - name: Create Namespace
+        run: |
+          ns="${{ inputs.kubernetes_namespace }}"
+
+          if kubectl get namespace "$ns" >/dev/null 2>&1; then
+            echo "Namespace '$ns' already exists."
+          else
+            echo "Creating namespace '$ns'..."
+            kubectl create namespace "$ns"
+          fi
+
+      - name: Verify Namespace
+        run: kubectl get namespace "${{ inputs.kubernetes_namespace }}"
